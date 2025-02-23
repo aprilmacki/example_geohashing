@@ -29,7 +29,7 @@ class GeoHashTest(unittest.TestCase):
         self.assertEqual(41.8798828125, result.start_lat)
         self.assertEqual(41.923828125, result.end_lat)
         self.assertEqual(-87.626953125, result.start_lon)
-        self.assertEqual(-87.5390625, result.end_lon)
+        self.assertEqual(-87.5830078125, result.end_lon)
 
     def test_to_boundary_even(self):
         result: geohash.GeoBoundary = geohash.to_lat_lon_boundary(196905, 20)
@@ -37,7 +37,7 @@ class GeoHashTest(unittest.TestCase):
         print_boundary(result)
 
         self.assertEqual(41.8359375, result.start_lat)
-        self.assertEqual(42.1875, result.end_lat)
+        self.assertEqual(42.01171875, result.end_lat)
         self.assertEqual(-87.890625, result.start_lon)
         self.assertEqual(-87.5390625, result.end_lon)
 

@@ -45,7 +45,7 @@ def to_lat_lon_boundary(geohash: int, precision: int) -> GeoBoundary:
     lon_max = 180
 
     is_lon_bit = True
-    for i in range(precision-1, 0, -1):
+    for i in range(precision-1, -1, -1):
         bit = geohash & (1 << i)
         if is_lon_bit:
             lon_mid = (lon_min + lon_max) / 2
