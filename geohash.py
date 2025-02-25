@@ -120,7 +120,7 @@ def calc_cells_within_radius(point: Coordinates, precision: int, radius: float) 
     west_point = displace_point(point, radius, 1.5 * math.pi)
     current_cell_hash = ghash
     while is_west_of(point.lon, boundary.start_lon, west_point.lon):
-        neighbor_cell_hash = calc_neighbor_cell(current_cell_hash, precision, 0, -1)
+        neighbor_cell_hash = displace_cell(current_cell_hash, precision, 0, -1)
         neighbor_cell_boundary = calc_cell_boundary(neighbor_cell_hash, precision)
         boundary.start_lon = neighbor_cell_boundary.start_lon
         ghashes += neighbor_cell_hash
@@ -130,7 +130,7 @@ def calc_cells_within_radius(point: Coordinates, precision: int, radius: float) 
     east_point = displace_point(point, radius, math.pi / 2)
     current_cell_hash = ghash
     while is_east_of(point.lon, boundary.end_lon, east_point.lon):
-        neighbor_cell_hash = calc_neighbor_cell(current_cell_hash, precision, 0, 1)
+        neighbor_cell_hash = displace_cell(current_cell_hash, precision, 0, 1)
         neighbor_cell_boundary = calc_cell_boundary(neighbor_cell_hash, precision)
         boundary.end_lon = neighbor_cell_boundary.end_lon
         ghashes += neighbor_cell_hash
@@ -142,7 +142,7 @@ def calc_cells_within_radius(point: Coordinates, precision: int, radius: float) 
     while north_point.lat > boundary.start_lat:
         new_ew_hashes = []
         for ew_hash in current_ew_hashes:
-            neighbor_cell_hash = calc_neighbor_cell(ew_hash, precision, 1, 0)
+            neighbor_cell_hash = displace_cell(ew_hash, precision, 1, 0)
             ghashes += neighbor_cell_hash
             new_ew_hashes += neighbor_cell_hash
 
@@ -155,7 +155,7 @@ def calc_cells_within_radius(point: Coordinates, precision: int, radius: float) 
     while south_point.lat < boundary.end_lat:
         new_ew_hashes = []
         for ew_hash in current_ew_hashes:
-            neighbor_cell_hash = calc_neighbor_cell(ew_hash, precision, -1, 0)
+            neighbor_cell_hash = displace_cell(ew_hash, precision, -1, 0)
             ghashes += neighbor_cell_hash
             new_ew_hashes += neighbor_cell_hash
 
@@ -165,7 +165,7 @@ def calc_cells_within_radius(point: Coordinates, precision: int, radius: float) 
 
     return ghashes
 
-def calc_cell_indices(geohash: int, precision: int) -> CellIndices:
+def geohash_to_cell_indices(geohash: int, precision: int) -> CellIndices:
     row_index = 0
     col_index = 0
 
@@ -179,8 +179,21 @@ def calc_cell_indices(geohash: int, precision: int) -> CellIndices:
 
     return CellIndices(row_index=row_index, col_index=col_index)
 
-def calc_neighbor_cell(geohash: int, precision: int, row_offset: int, col_offset: int) -> int:
-    cell_indices: CellIndices = calc_cell_indices(geohash, precision)
+def cell_indices_to_geohash(cell_indices: CellIndices, precision: int) -> int:
+    geohash = 0
+    for i in range(0, precision):
+        if i % 2 == 0:
+            if cell_indices.row_index & (1 << (i // 2)):
+                geohash = geohash | (1 << i)
+        else:
+            if cell_indices.col_index & (1 << (i // 2)):
+                geohash = geohash | (1 << i)
+    return geohash
+
+def displace_cell(geohash: int, precision: int, row_offset: int, col_offset: int) -> int:
+    cell_indices: CellIndices = geohash_to_cell_indices(geohash, precision)
+
+    new_cell_indices = CellIndices(row_index=cell_indices.row_index + row_offset, col_index=cell_indices.col_index + col_offset)
 
 
 def displace_point(start_point: Coordinates, offset_km: float, angle_from_n_rad: float) -> Coordinates:
