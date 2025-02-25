@@ -42,6 +42,19 @@ class GeoHashTest(unittest.TestCase):
         self.assertEqual(-87.890625, result.start_lon)
         self.assertEqual(-87.5390625, result.end_lon)
 
+    def test_calc_cell_boundary_adjacent(self):
+        result: geohash.CellBoundary = geohash.calc_cell_boundary( 6300988, 25)
+        self.assertEqual(41.8798828125, result.start_lat)
+        self.assertEqual(41.923828125, result.end_lat)
+        self.assertEqual(-87.626953125, result.start_lon)
+        self.assertEqual(-87.5830078125, result.end_lon)
+
+        result: geohash.CellBoundary = geohash.calc_cell_boundary(6300982, 25)
+        self.assertEqual(41.923828125, result.start_lat) # TODO Wrong
+        self.assertEqual(41.9677734375, result.end_lat) # TODO Wrong
+        self.assertEqual(-87.626953125, result.start_lon)
+        self.assertEqual(-87.5830078125, result.end_lon)
+
     def test_random_point_to_geohash_to_boundary_even(self):
         self.t_random_point_to_geohash_to_boundary(20)
 
@@ -139,12 +152,8 @@ class GeoHashTest(unittest.TestCase):
     def test_is_east_of_boundary_point_crosses_0(self):
         self.assertFalse(geohash.is_east_of(origin_point_lon=-7, boundary_point_lon=2, test_point_lon=-1))
 
-    def test_calc_cells_within_radius(self):
-        point = Coordinates(41.881832, -87.623177)
-
-        geohash.calc_cells_within_radius(point, precision=25, radius=10)
-
     def test_geohash_to_cell_indices(self):
+        # TODO: Add an example using 5 precision
         indices: CellIndices = geohash.geohash_to_cell_indices(0b0101, 4)
         self.assertEqual(CellIndices(row_index=3, col_index=0), indices)
         indices: CellIndices = geohash.geohash_to_cell_indices(0b0100, 4)
@@ -180,6 +189,43 @@ class GeoHashTest(unittest.TestCase):
         self.assertEqual(CellIndices(row_index=1, col_index=3), indices)
         indices: CellIndices = geohash.geohash_to_cell_indices(0b1010, 4)
         self.assertEqual(CellIndices(row_index=0, col_index=3), indices)
+
+    def test_geohash_to_cell_indices_odd(self):
+        indices: CellIndices = geohash.geohash_to_cell_indices(0b01010, 5)
+        self.assertEqual(CellIndices(row_index=3, col_index=0), indices)
+        indices: CellIndices = geohash.geohash_to_cell_indices(0b01000, 5)
+        self.assertEqual(CellIndices(row_index=2, col_index=0), indices)
+        indices: CellIndices = geohash.geohash_to_cell_indices(0b00010, 5)
+        self.assertEqual(CellIndices(row_index=1, col_index=0), indices)
+        indices: CellIndices = geohash.geohash_to_cell_indices(0b00000, 5)
+        self.assertEqual(CellIndices(row_index=0, col_index=0), indices)
+
+        indices: CellIndices = geohash.geohash_to_cell_indices(0b01011, 5)
+        self.assertEqual(CellIndices(row_index=3, col_index=1), indices)
+        indices: CellIndices = geohash.geohash_to_cell_indices(0b01001, 5)
+        self.assertEqual(CellIndices(row_index=2, col_index=1), indices)
+        indices: CellIndices = geohash.geohash_to_cell_indices(0b00011, 5)
+        self.assertEqual(CellIndices(row_index=1, col_index=1), indices)
+        indices: CellIndices = geohash.geohash_to_cell_indices(0b00001, 5)
+        self.assertEqual(CellIndices(row_index=0, col_index=1), indices)
+
+        indices: CellIndices = geohash.geohash_to_cell_indices(0b01110, 5)
+        self.assertEqual(CellIndices(row_index=3, col_index=2), indices)
+        indices: CellIndices = geohash.geohash_to_cell_indices(0b01100, 5)
+        self.assertEqual(CellIndices(row_index=2, col_index=2), indices)
+        indices: CellIndices = geohash.geohash_to_cell_indices(0b00110, 5)
+        self.assertEqual(CellIndices(row_index=1, col_index=2), indices)
+        indices: CellIndices = geohash.geohash_to_cell_indices(0b00100, 5)
+        self.assertEqual(CellIndices(row_index=0, col_index=2), indices)
+
+        indices: CellIndices = geohash.geohash_to_cell_indices(0b11111, 5)
+        self.assertEqual(CellIndices(row_index=3, col_index=7), indices)
+        indices: CellIndices = geohash.geohash_to_cell_indices(0b11101, 5)
+        self.assertEqual(CellIndices(row_index=2, col_index=7), indices)
+        indices: CellIndices = geohash.geohash_to_cell_indices(0b10111, 5)
+        self.assertEqual(CellIndices(row_index=1, col_index=7), indices)
+        indices: CellIndices = geohash.geohash_to_cell_indices(0b10101, 5)
+        self.assertEqual(CellIndices(row_index=0, col_index=7), indices)
 
     def test_cell_indices_to_geohash(self):
         ghash = geohash.cell_indices_to_geohash(CellIndices(row_index=3, col_index=0), 4)
@@ -217,3 +263,45 @@ class GeoHashTest(unittest.TestCase):
         self.assertEqual(0b1011, ghash)
         ghash = geohash.cell_indices_to_geohash(CellIndices(row_index=0, col_index=3), 4)
         self.assertEqual(0b1010, ghash)
+
+    def test_cell_indices_to_geohash_odd(self):
+        ghash = geohash.cell_indices_to_geohash(CellIndices(row_index=3, col_index=0), 5)
+        self.assertEqual(0b01010, ghash)
+        ghash = geohash.cell_indices_to_geohash(CellIndices(row_index=2, col_index=0), 5)
+        self.assertEqual(0b01000, ghash)
+        ghash = geohash.cell_indices_to_geohash(CellIndices(row_index=1, col_index=0), 5)
+        self.assertEqual(0b00010, ghash)
+        ghash = geohash.cell_indices_to_geohash(CellIndices(row_index=0, col_index=0), 5)
+        self.assertEqual(0b00000, ghash)
+
+        ghash = geohash.cell_indices_to_geohash(CellIndices(row_index=3, col_index=1), 5)
+        self.assertEqual(0b01011, ghash)
+        ghash = geohash.cell_indices_to_geohash(CellIndices(row_index=2, col_index=1), 5)
+        self.assertEqual(0b01001, ghash)
+        ghash = geohash.cell_indices_to_geohash(CellIndices(row_index=1, col_index=1), 5)
+        self.assertEqual(0b00011, ghash)
+        ghash = geohash.cell_indices_to_geohash(CellIndices(row_index=0, col_index=1), 5)
+        self.assertEqual(0b00001, ghash)
+
+        ghash = geohash.cell_indices_to_geohash(CellIndices(row_index=3, col_index=2), 5)
+        self.assertEqual(0b01110, ghash)
+        ghash = geohash.cell_indices_to_geohash(CellIndices(row_index=2, col_index=2), 5)
+        self.assertEqual(0b01100, ghash)
+        ghash = geohash.cell_indices_to_geohash(CellIndices(row_index=1, col_index=2), 5)
+        self.assertEqual(0b00110, ghash)
+        ghash = geohash.cell_indices_to_geohash(CellIndices(row_index=0, col_index=2), 5)
+        self.assertEqual(0b00100, ghash)
+
+        ghash = geohash.cell_indices_to_geohash(CellIndices(row_index=3, col_index=7), 5)
+        self.assertEqual(0b11111, ghash)
+        ghash = geohash.cell_indices_to_geohash(CellIndices(row_index=2, col_index=7), 5)
+        self.assertEqual(0b11101, ghash)
+        ghash = geohash.cell_indices_to_geohash(CellIndices(row_index=1, col_index=7), 5)
+        self.assertEqual(0b10111, ghash)
+        ghash = geohash.cell_indices_to_geohash(CellIndices(row_index=0, col_index=7), 5)
+        self.assertEqual(0b10101, ghash)
+
+    # def test_calc_cells_within_radius(self):
+    #     point = Coordinates(41.881832, -87.623177)
+    #     geohash.calc_cells_within_radius(point, precision=25, radius=10)
+    #

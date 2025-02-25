@@ -93,14 +93,12 @@ def is_west_of(origin_point_lon: float, boundary_point_lon: float, test_point_lo
     distance_west_of = lambda origin_lon, point_lon : origin_lon - point_lon + 360 if origin_lon < 0 < point_lon else origin_lon - point_lon
     boundary_dist = distance_west_of(origin_point_lon, boundary_point_lon)
     test_point_dist = distance_west_of(origin_point_lon, test_point_lon)
-    # TODO: unit test this
     return test_point_dist > boundary_dist
 
 def is_east_of(origin_point_lon: float, boundary_point_lon: float, test_point_lon: float) -> bool:
     distance_east_of = lambda origin_lon, point_lon : point_lon - origin_lon + 360 if origin_lon > 0 > point_lon else point_lon - origin_lon
     boundary_dist = distance_east_of(origin_point_lon, boundary_point_lon)
     test_point_dist = distance_east_of(origin_point_lon, test_point_lon)
-    # TODO: unit test this
     return test_point_dist > boundary_dist
 
 def calc_cells_within_radius(point: Coordinates, precision: int, radius: float) -> list[int]:
@@ -169,25 +167,31 @@ def geohash_to_cell_indices(geohash: int, precision: int) -> CellIndices:
     row_index = 0
     col_index = 0
 
-    for i in range(0, precision):
+    is_col_index = True
+    for i in range(precision-1, -1, -1):
         bit: bool = (geohash & (1 << i)) != 0
         if bit:
-            if i % 2 == 0:
-                row_index = row_index | (1 << (i // 2))
-            elif i % 2 == 1 :
+            if is_col_index:
                 col_index = col_index | (1 << (i // 2))
+            else:
+                row_index = row_index | (1 << (i // 2))
+        is_col_index = not is_col_index
 
     return CellIndices(row_index=row_index, col_index=col_index)
 
 def cell_indices_to_geohash(cell_indices: CellIndices, precision: int) -> int:
     geohash = 0
-    for i in range(0, precision):
-        if i % 2 == 0:
-            if cell_indices.row_index & (1 << (i // 2)):
-                geohash = geohash | (1 << i)
-        else:
+
+    is_col_index = True
+    for i in range(precision-1, -1, -1):
+        if is_col_index:
             if cell_indices.col_index & (1 << (i // 2)):
                 geohash = geohash | (1 << i)
+        else:
+            if cell_indices.row_index & (1 << (i // 2)):
+                geohash = geohash | (1 << i)
+        is_col_index = not is_col_index
+
     return geohash
 
 def displace_cell(geohash: int, precision: int, row_offset: int, col_offset: int) -> int:
@@ -195,6 +199,7 @@ def displace_cell(geohash: int, precision: int, row_offset: int, col_offset: int
 
     new_cell_indices = CellIndices(row_index=cell_indices.row_index + row_offset, col_index=cell_indices.col_index + col_offset)
 
+    return cell_indices_to_geohash(new_cell_indices, precision)
 
 def displace_point(start_point: Coordinates, offset_km: float, angle_from_n_rad: float) -> Coordinates:
     # See http://www.movable-type.co.uk/scripts/latlong.html
