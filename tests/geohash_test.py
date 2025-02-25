@@ -3,7 +3,7 @@ import random
 import unittest
 
 import geohash
-from geohash import Coordinates, CellBoundary
+from geohash import Coordinates, CellBoundary, CellIndices
 
 
 def print_point(lat: float, lon: float):
@@ -139,3 +139,44 @@ class GeoHashTest(unittest.TestCase):
     def test_is_east_of_boundary_point_crosses_0(self):
         self.assertFalse(geohash.is_east_of(origin_point_lon=-7, boundary_point_lon=2, test_point_lon=-1))
 
+    def test_calc_cells_within_radius(self):
+        point = Coordinates(41.881832, -87.623177)
+
+        geohash.calc_cells_within_radius(point, precision=25, radius=10)
+
+    def test_calc_cell_indices(self):
+        indices: CellIndices = geohash.calc_cell_indices(0b0101, 4)
+        self.assertEqual(CellIndices(row_index=3, col_index=0), indices)
+        indices: CellIndices = geohash.calc_cell_indices(0b0100, 4)
+        self.assertEqual(CellIndices(row_index=2, col_index=0), indices)
+        indices: CellIndices = geohash.calc_cell_indices(0b0001, 4)
+        self.assertEqual(CellIndices(row_index=1, col_index=0), indices)
+        indices: CellIndices = geohash.calc_cell_indices(0b0000, 4)
+        self.assertEqual(CellIndices(row_index=0, col_index=0), indices)
+
+        indices: CellIndices = geohash.calc_cell_indices(0b0111, 4)
+        self.assertEqual(CellIndices(row_index=3, col_index=1), indices)
+        indices: CellIndices = geohash.calc_cell_indices(0b0110, 4)
+        self.assertEqual(CellIndices(row_index=2, col_index=1), indices)
+        indices: CellIndices = geohash.calc_cell_indices(0b0011, 4)
+        self.assertEqual(CellIndices(row_index=1, col_index=1), indices)
+        indices: CellIndices = geohash.calc_cell_indices(0b0010, 4)
+        self.assertEqual(CellIndices(row_index=0, col_index=1), indices)
+
+        indices: CellIndices = geohash.calc_cell_indices(0b1101, 4)
+        self.assertEqual(CellIndices(row_index=3, col_index=2), indices)
+        indices: CellIndices = geohash.calc_cell_indices(0b1100, 4)
+        self.assertEqual(CellIndices(row_index=2, col_index=2), indices)
+        indices: CellIndices = geohash.calc_cell_indices(0b1001, 4)
+        self.assertEqual(CellIndices(row_index=1, col_index=2), indices)
+        indices: CellIndices = geohash.calc_cell_indices(0b1000, 4)
+        self.assertEqual(CellIndices(row_index=0, col_index=2), indices)
+
+        indices: CellIndices = geohash.calc_cell_indices(0b1111, 4)
+        self.assertEqual(CellIndices(row_index=3, col_index=3), indices)
+        indices: CellIndices = geohash.calc_cell_indices(0b1110, 4)
+        self.assertEqual(CellIndices(row_index=2, col_index=3), indices)
+        indices: CellIndices = geohash.calc_cell_indices(0b1011, 4)
+        self.assertEqual(CellIndices(row_index=1, col_index=3), indices)
+        indices: CellIndices = geohash.calc_cell_indices(0b1010, 4)
+        self.assertEqual(CellIndices(row_index=0, col_index=3), indices)

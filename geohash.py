@@ -10,10 +10,16 @@ class CellBoundary:
     end_lon: float      # East side
 
 @dataclass
+class CellIndices:
+    # Increasing row index is northward. Rows run latitudinal
+    row_index: int
+    # Increasing col index is eastward. Cols run longitudinal
+    col_index: int
+
+@dataclass
 class Coordinates:
     lat: float
     lon: float
-
 
 EARTH_RADIUS_KM = 6371
 
@@ -123,8 +129,7 @@ def calc_cells_within_radius(point: Coordinates, precision: int, radius: float) 
 
     east_point = displace_point(point, radius, math.pi / 2)
     current_cell_hash = ghash
-    while east_point.lon > boundary.end_lon:
-        # TODO: Handle wrap around
+    while is_east_of(point.lon, boundary.end_lon, east_point.lon):
         neighbor_cell_hash = calc_neighbor_cell(current_cell_hash, precision, 0, 1)
         neighbor_cell_boundary = calc_cell_boundary(neighbor_cell_hash, precision)
         boundary.end_lon = neighbor_cell_boundary.end_lon
@@ -135,8 +140,6 @@ def calc_cells_within_radius(point: Coordinates, precision: int, radius: float) 
     north_point = displace_point(point, radius, 0)
     current_ew_hashes = copy(ew_hashes)
     while north_point.lat > boundary.start_lat:
-        # TODO: Handle wrap around
-
         new_ew_hashes = []
         for ew_hash in current_ew_hashes:
             neighbor_cell_hash = calc_neighbor_cell(ew_hash, precision, 1, 0)
@@ -150,7 +153,6 @@ def calc_cells_within_radius(point: Coordinates, precision: int, radius: float) 
     south_point = displace_point(point, radius, math.pi)
     current_ew_hashes = copy(ew_hashes)
     while south_point.lat < boundary.end_lat:
-        # TODO: Handle wrap around
         new_ew_hashes = []
         for ew_hash in current_ew_hashes:
             neighbor_cell_hash = calc_neighbor_cell(ew_hash, precision, -1, 0)
@@ -163,10 +165,23 @@ def calc_cells_within_radius(point: Coordinates, precision: int, radius: float) 
 
     return ghashes
 
+def calc_cell_indices(geohash: int, precision: int) -> CellIndices:
+    row_index = 0
+    col_index = 0
+
+    for i in range(0, precision):
+        bit: bool = (geohash & (1 << i)) != 0
+        if bit:
+            if i % 2 == 0:
+                row_index = row_index | (1 << (i // 2))
+            elif i % 2 == 1 :
+                col_index = col_index | (1 << (i // 2))
+
+    return CellIndices(row_index=row_index, col_index=col_index)
+
 def calc_neighbor_cell(geohash: int, precision: int, row_offset: int, col_offset: int) -> int:
-    # Positive row offset is north-ward
-    # Positive column offset is east-ward
-    pass
+    cell_indices: CellIndices = calc_cell_indices(geohash, precision)
+
 
 def displace_point(start_point: Coordinates, offset_km: float, angle_from_n_rad: float) -> Coordinates:
     # See http://www.movable-type.co.uk/scripts/latlong.html
