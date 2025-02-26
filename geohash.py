@@ -145,7 +145,6 @@ def calc_cells_within_radius(point: Coordinates, precision: int, radius: float) 
             new_ew_hashes.append(neighbor_cell_hash)
 
         neighbor_cell_boundary = calc_cell_boundary(new_ew_hashes[0], precision)
-        # TODO: this is returning boundary two cells down instead
         boundary.end_lat = neighbor_cell_boundary.end_lat
         current_ew_hashes = new_ew_hashes
 

@@ -3,7 +3,7 @@ import random
 import unittest
 
 import geohash
-from geohash import Coordinates, CellBoundary, CellIndices
+from geohash import Coordinates, CellIndices
 
 
 def print_point(lat: float, lon: float):
