@@ -19,41 +19,41 @@ class GeoHashTest(unittest.TestCase):
     def test_calc_geohash(self):
         # Odd precision
         result = geohash.calc_geohash(Coordinates(41.881832, -87.623177), 25)
-        self.assertEqual(6300988, result)
+        self.assertEqual(13275030, result)
 
         # Even precision
         result = geohash.calc_geohash(Coordinates(41.881832, -87.623177), 20)
-        self.assertEqual(196905, result)
+        self.assertEqual(414844, result)
 
     def test_calc_cell_boundary(self):
         # Odd precision
         result: geohash.CellBoundary = geohash.calc_cell_boundary(6300988, 25)
         print_boundary(result)
-        self.assertEqual(41.8798828125, result.start_lat)
-        self.assertEqual(41.923828125, result.end_lat)
+        self.assertEqual(-41.923828125, result.start_lat)
+        self.assertEqual(-41.8798828125, result.end_lat)
         self.assertEqual(-87.626953125, result.start_lon)
         self.assertEqual(-87.5830078125, result.end_lon)
 
         # Even precision
         result: geohash.CellBoundary = geohash.calc_cell_boundary(196905, 20)
         print_boundary(result)
-        self.assertEqual(41.8359375, result.start_lat)
-        self.assertEqual(42.01171875, result.end_lat)
+        self.assertEqual(-42.01171875, result.start_lat)
+        self.assertEqual(-41.8359375, result.end_lat)
         self.assertEqual(-87.890625, result.start_lon)
         self.assertEqual(-87.5390625, result.end_lon)
 
     def test_calc_cell_boundary_adjacent(self):
-        result: geohash.CellBoundary = geohash.calc_cell_boundary( 6300988, 25)
-        self.assertEqual(41.8798828125, result.start_lat)
-        self.assertEqual(41.923828125, result.end_lat)
-        self.assertEqual(-87.626953125, result.start_lon)
-        self.assertEqual(-87.5830078125, result.end_lon)
+        result: geohash.CellBoundary = geohash.calc_cell_boundary( 0b00110, 5)
+        self.assertEqual(-45, result.start_lat)
+        self.assertEqual(0, result.end_lat)
+        self.assertEqual(-90, result.start_lon)
+        self.assertEqual(-45, result.end_lon)
 
-        result: geohash.CellBoundary = geohash.calc_cell_boundary(6300982, 25)
-        self.assertEqual(41.923828125, result.start_lat) # TODO Wrong
-        self.assertEqual(41.9677734375, result.end_lat) # TODO Wrong
-        self.assertEqual(-87.626953125, result.start_lon)
-        self.assertEqual(-87.5830078125, result.end_lon)
+        result: geohash.CellBoundary = geohash.calc_cell_boundary(0b01100, 5)
+        self.assertEqual(-0, result.start_lat)
+        self.assertEqual(45, result.end_lat)
+        self.assertEqual(-90, result.start_lon)
+        self.assertEqual(-45, result.end_lon)
 
     def test_random_point_to_geohash_to_boundary_even(self):
         self.t_random_point_to_geohash_to_boundary(20)
@@ -301,7 +301,7 @@ class GeoHashTest(unittest.TestCase):
         ghash = geohash.cell_indices_to_geohash(CellIndices(row_index=0, col_index=7), 5)
         self.assertEqual(0b10101, ghash)
 
-    # def test_calc_cells_within_radius(self):
-    #     point = Coordinates(41.881832, -87.623177)
-    #     geohash.calc_cells_within_radius(point, precision=25, radius=10)
-    #
+    def test_calc_cells_within_radius(self):
+        point = Coordinates(41.881832, -87.623177)
+        geohash.calc_cells_within_radius(point, precision=25, radius=5)
+

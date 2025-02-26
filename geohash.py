@@ -32,8 +32,8 @@ def calc_geohash(point: Coordinates, precision: int):
     geohash = 0
     for i in range(precision):
         new_bit = 0
-        is_lon_bit = i % 2 == 0
-        if is_lon_bit:
+        is_col_bit = i % 2 == 0
+        if is_col_bit:
             # Divide left-right
             lon_mid = (lon_min + lon_max) / 2
             if point.lon >= lon_mid:
@@ -46,10 +46,10 @@ def calc_geohash(point: Coordinates, precision: int):
             # Divide up-down
             lat_mid = (lat_min + lat_max) / 2
             if point.lat >= lat_mid:
-                new_bit = 0
+                new_bit = 1
                 lat_min = lat_mid
             else:
-                new_bit = 1
+                new_bit = 0
                 lat_max = lat_mid
         geohash = (geohash << 1) | new_bit
     return geohash
@@ -60,10 +60,10 @@ def calc_cell_boundary(cell_geohash: int, precision: int) -> CellBoundary:
     lon_min = -180
     lon_max = 180
 
-    is_lon_bit = True
+    is_col_bit = True
     for i in range(precision-1, -1, -1):
         bit = cell_geohash & (1 << i)
-        if is_lon_bit:
+        if is_col_bit:
             lon_mid = (lon_min + lon_max) / 2
             if bit:
                 # Right side
@@ -75,11 +75,11 @@ def calc_cell_boundary(cell_geohash: int, precision: int) -> CellBoundary:
             lat_mid = (lat_min + lat_max) / 2
             if bit:
                 # Top side
-                lat_max = lat_mid
+                lat_min = lat_mid
             else:
                 # Bottom side
-                lat_min = lat_mid
-        is_lon_bit = not is_lon_bit
+                lat_max = lat_mid
+        is_col_bit = not is_col_bit
 
     return CellBoundary(
         start_lat=lat_min,
@@ -121,8 +121,8 @@ def calc_cells_within_radius(point: Coordinates, precision: int, radius: float) 
         neighbor_cell_hash = displace_cell(current_cell_hash, precision, 0, -1)
         neighbor_cell_boundary = calc_cell_boundary(neighbor_cell_hash, precision)
         boundary.start_lon = neighbor_cell_boundary.start_lon
-        ghashes += neighbor_cell_hash
-        ew_hashes += neighbor_cell_hash
+        ghashes.append(neighbor_cell_hash)
+        ew_hashes.append(neighbor_cell_hash)
         current_cell_hash = neighbor_cell_hash
 
     east_point = displace_point(point, radius, math.pi / 2)
@@ -131,34 +131,35 @@ def calc_cells_within_radius(point: Coordinates, precision: int, radius: float) 
         neighbor_cell_hash = displace_cell(current_cell_hash, precision, 0, 1)
         neighbor_cell_boundary = calc_cell_boundary(neighbor_cell_hash, precision)
         boundary.end_lon = neighbor_cell_boundary.end_lon
-        ghashes += neighbor_cell_hash
-        ew_hashes += neighbor_cell_hash
+        ghashes.append(neighbor_cell_hash)
+        ew_hashes.append(neighbor_cell_hash)
         current_cell_hash = neighbor_cell_hash
 
     north_point = displace_point(point, radius, 0)
     current_ew_hashes = copy(ew_hashes)
-    while north_point.lat > boundary.start_lat:
+    while north_point.lat > boundary.end_lat:
         new_ew_hashes = []
         for ew_hash in current_ew_hashes:
             neighbor_cell_hash = displace_cell(ew_hash, precision, 1, 0)
-            ghashes += neighbor_cell_hash
-            new_ew_hashes += neighbor_cell_hash
+            ghashes.append(neighbor_cell_hash)
+            new_ew_hashes.append(neighbor_cell_hash)
 
         neighbor_cell_boundary = calc_cell_boundary(new_ew_hashes[0], precision)
-        boundary.start_lat = neighbor_cell_boundary.start_lat
+        # TODO: this is returning boundary two cells down instead
+        boundary.end_lat = neighbor_cell_boundary.end_lat
         current_ew_hashes = new_ew_hashes
 
     south_point = displace_point(point, radius, math.pi)
     current_ew_hashes = copy(ew_hashes)
-    while south_point.lat < boundary.end_lat:
+    while south_point.lat < boundary.start_lat:
         new_ew_hashes = []
         for ew_hash in current_ew_hashes:
             neighbor_cell_hash = displace_cell(ew_hash, precision, -1, 0)
-            ghashes += neighbor_cell_hash
-            new_ew_hashes += neighbor_cell_hash
+            ghashes.append(neighbor_cell_hash)
+            new_ew_hashes.append(neighbor_cell_hash)
 
         neighbor_cell_boundary = calc_cell_boundary(new_ew_hashes[0], precision)
-        boundary.end_lat = neighbor_cell_boundary.end_lat
+        boundary.start_lat = neighbor_cell_boundary.start_lat
         current_ew_hashes = new_ew_hashes
 
     return ghashes
