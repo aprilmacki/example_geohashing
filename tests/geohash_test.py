@@ -303,5 +303,6 @@ class GeoHashTest(unittest.TestCase):
 
     def test_calc_cells_within_radius(self):
         point = Coordinates(41.881832, -87.623177)
-        geohash.calc_cells_within_radius(point, precision=25, radius=5)
+        results = geohash.calc_cells_within_radius(point, precision=25, radius=5)
 
+        self.assertEqual({13275030, 13275027, 13275026, 13275031, 13275036, 13275033, 13275032, 13275037, 13275028, 13275025, 13275024, 13275029}, set(results))
